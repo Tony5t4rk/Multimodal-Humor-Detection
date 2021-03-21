@@ -10,6 +10,8 @@ All the code of the project is in the main.py program.
 
 ## Experiment Result
 
+Detailed experiment records can be viewed [结果记录](https://www.wolai.com/tony5t4rk/38cTueJT7e7xHFGMDj3GBB).
+
 ### accuracy
 
 The data in the table are the average of 10 experimental results.
