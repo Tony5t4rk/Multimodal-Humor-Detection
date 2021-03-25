@@ -48,6 +48,7 @@ MAX_SENTENCE_LEN = 20
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+N_EXPERIMENT = 10
 N_EPOCH = 15
 BATCH_SIZE = 128
 SHUFFLE = True
@@ -786,12 +787,77 @@ def test_score(model, test_dataloader):
     preds = (preds >= 0)
 
     f1 = f1_score(np.round(preds), np.round(y_test), average='weighted')
-    accuracy = accuracy_score(y_test, preds)
+    acc = accuracy_score(y_test, preds)
 
-    print('accuracy:{}\nf1:{}'.format(round(accuracy, 4), round(f1, 4)))
+    print('accuracy:{}\nf1:{}'.format(round(acc, 4), round(f1, 4)))
+
+    return acc, f1
 
 
-def main():
+def set_hyperpamameter():
+    global LEARNING_RATE
+    LEARNING_RATE = random.choice([0.001, 0.002, 0.005, 0.008, 0.01])
+
+    # unimodal context network config
+    global UNI_T_N_HIDDEN, UNI_A_N_HIDDEN, UNI_V_N_HIDDEN
+    UNI_T_N_HIDDEN = random.choice([32, 64, 88, 128, 156, 256])
+    UNI_A_N_HIDDEN = random.choice([8, 16, 32, 48, 64, 80])
+    UNI_V_N_HIDDEN = random.choice([8, 16, 32, 48, 64, 80])
+
+    # multimodal context network config
+    global MUL_T_IN_DIM, MUL_A_IN_DIM, MUL_V_IN_DIM
+    MUL_T_IN_DIM = MAX_CONTEXT_LEN * UNI_T_N_HIDDEN
+    MUL_A_IN_DIM = MAX_CONTEXT_LEN * UNI_A_N_HIDDEN
+    MUL_V_IN_DIM = MAX_CONTEXT_LEN * UNI_V_N_HIDDEN
+
+    global MUL_T_DROPOUT, MUL_A_DROPOUT, MUL_V_DROPOUT
+    MUL_T_DROPOUT = random.choice([0.0, 0.1, 0.2, 0.5])
+    MUL_A_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.1])
+    MUL_V_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.1])
+
+    global SRC_N_FEATURE
+    SRC_N_FEATURE = UNI_T_N_HIDDEN + UNI_A_N_HIDDEN + UNI_V_N_HIDDEN
+
+    global MUL_DROPOUT
+    MUL_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.1])
+
+    # memory fusion network config
+    global MFN_T_N_HIDDEN, MFN_A_N_HIDDEN, MFN_V_N_HIDDEN, MFN_N_HIDDEN, MFN_MEM_DIM
+    MFN_T_N_HIDDEN = random.choice([32, 64, 88, 128, 156, 256])
+    MFN_A_N_HIDDEN = random.choice([8, 16, 32, 48, 64, 80])
+    MFN_V_N_HIDDEN = random.choice([8, 16, 32, 48, 64, 80])
+    MFN_N_HIDDEN = MFN_T_N_HIDDEN + MFN_A_N_HIDDEN + MFN_V_N_HIDDEN
+    MFN_MEM_DIM = random.choice([64, 128, 256, 300, 400])
+
+    global MFN_ATTN_IN_DIM
+    MFN_ATTN_IN_DIM = MFN_N_HIDDEN * MFN_WINDOW_DIM
+
+    global MFN_NN1_DIM, MFN_NN1_DROPOUT
+    MFN_NN1_DIM = random.choice([32, 64, 128, 256])
+    MFN_NN1_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.7])
+
+    global MFN_NN2_DIM, MFN_NN2_DROPOUT
+    MFN_NN2_DIM = random.choice([32, 64, 128, 256])
+    MFN_NN2_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.7])
+
+    global MFN_GAMMA_IN_DIM
+    MFN_GAMMA_IN_DIM = MFN_ATTN_IN_DIM + MFN_MEM_DIM
+
+    global MFN_GAMMA1_DIM, MFN_GAMMA1_DROPOUT
+    MFN_GAMMA1_DIM = random.choice([32, 64, 128, 256])
+    MFN_GAMMA1_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.7])
+
+    global MFN_GAMMA2_DIM, MFN_GAMMA2_DROPOUT
+    MFN_GAMMA2_DIM = random.choice([32, 64, 128, 256])
+    MFN_GAMMA2_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.7])
+
+    global MFN_OUTPUT_IN_DIM, MFN_OUTPUT_HIDDEN_DIM, MFN_OUTPUT_DROPOUT
+    MFN_OUTPUT_IN_DIM = MFN_N_HIDDEN + MFN_MEM_DIM
+    MFN_OUTPUT_HIDDEN_DIM = random.choice([32, 64, 128, 256])
+    MFN_OUTPUT_DROPOUT = random.choice([0.0, 0.2, 0.5, 0.7])
+
+
+def experiment():
     train_dataloader, dev_dataloader, test_dataloader = set_dataloader()
 
     model = C_MFN().to(DEVICE)
@@ -808,10 +874,21 @@ def main():
 
     print('-' * 32 + 'test' + '-' * 32)
     test_start_time = time.time()
-    test_score(model, test_dataloader)
+    acc, f1 = test_score(model, test_dataloader)
     test_finish_time = time.time()
     print('test cost:{}s'.format(test_finish_time - test_start_time))
 
+    return train_finish_time - train_start_time, acc
+
 
 if __name__ == '__main__':
-    main()
+    trains_cost = []
+    accuracys = []
+    for n_experiment in range(N_EXPERIMENT):
+        print('=' * 32 + 'experiment:{}'.format(n_experiment) + '=' * 32)
+        set_hyperpamameter()
+        train_cost, acc = experiment()
+        trains_cost.append(train_cost)
+        accuracys.append(acc)
+    print('*' * 64)
+    print('average train cost:{}\naverage accuracy:{}'.format(np.mean(np.array(trains_cost)), np.mean(np.array(accuracys))))

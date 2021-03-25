@@ -4,7 +4,7 @@
 
 This project is my own Undergraduate Graduation Project.
 
-It implements the C-MFN baseline proposed in [UR-FUNNY](https://www.aclweb.org/anthology/D19-1211) to detect humor in multimodal language.
+It implements the C-MFN baseline proposed in [UR-FUNNY: A Multimodal Language Dataset for Understanding Humor](https://www.aclweb.org/anthology/D19-1211) to detect humor in multimodal language.
 
 All the code of the project is in the main.py program.
 
