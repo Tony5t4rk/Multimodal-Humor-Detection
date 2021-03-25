@@ -48,7 +48,7 @@ MAX_SENTENCE_LEN = 20
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-N_EXPERIMENT = 10
+N_EXPERIMENT = 30
 N_EPOCH = 15
 BATCH_SIZE = 128
 SHUFFLE = True
@@ -434,7 +434,7 @@ class UnimodalContextNet(nn.Module):
         if not USE_A_CONTEXT:
             a_context = torch.zeros_like(a_context, requires_grad=True)
         if not USE_V_CONTEXT:
-            t_context = torch.zeros_like(v_context, requires_grad=True)
+            v_context = torch.zeros_like(v_context, requires_grad=True)
 
         t_h0 = torch.zeros(new_batch_size, UNI_T_N_HIDDEN).unsqueeze(0).to(DEVICE)  # t_h0: [1, batch_size * context_len, UNI_T_N_HIDDEN]
         t_c0 = torch.zeros(new_batch_size, UNI_T_N_HIDDEN).unsqueeze(0).to(DEVICE)  # t_c0: [1, batch_size * context_len, UNI_T_N_HIDDEN]
@@ -759,7 +759,7 @@ def train_epoch(model, train_dataloader, optimizer, criterion):
 def train(model, train_dataloader, optimizer, criterion):
     for epoch in range(N_EPOCH):
         train_loss = train_epoch(model, train_dataloader, optimizer, criterion)
-        print('epoch:{}  train loss:{}'.format(epoch, round(train_loss, 4)))
+        # print('epoch:{}  train loss:{}'.format(epoch, round(train_loss, 4)))
 
 
 def test_epoch(model, test_dataloader):
@@ -789,7 +789,7 @@ def test_score(model, test_dataloader):
     f1 = f1_score(np.round(preds), np.round(y_test), average='weighted')
     acc = accuracy_score(y_test, preds)
 
-    print('accuracy:{}\nf1:{}'.format(round(acc, 4), round(f1, 4)))
+    # print('accuracy:{}\nf1:{}'.format(round(acc, 4), round(f1, 4)))
 
     return acc, f1
 
@@ -864,19 +864,15 @@ def experiment():
     optimizer = optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=LEARNING_RATE, betas=(0.9, 0.98), eps=1e-9)
     criterion = nn.BCEWithLogitsLoss().to(DEVICE)
 
-    show_config(optimizer='optim.Adam(betas=(0.9, 0.98), eps=1e-9)', criterion='nn.BCEWithLogitsLoss')
+    # show_config(optimizer='optim.Adam(betas=(0.9, 0.98), eps=1e-9)', criterion='nn.BCEWithLogitsLoss')
 
-    print('-' * 32 + 'train' + '-' * 32)
+    # print('-' * 32 + 'train' + '-' * 32)
     train_start_time = time.time()
     train(model, train_dataloader, optimizer, criterion)
     train_finish_time = time.time()
-    print('train cost:{}s'.format(train_finish_time - train_start_time))
+    # print('train cost:{}s'.format(train_finish_time - train_start_time))
 
-    print('-' * 32 + 'test' + '-' * 32)
-    test_start_time = time.time()
     acc, f1 = test_score(model, test_dataloader)
-    test_finish_time = time.time()
-    print('test cost:{}s'.format(test_finish_time - test_start_time))
 
     return train_finish_time - train_start_time, acc
 
@@ -885,10 +881,11 @@ if __name__ == '__main__':
     trains_cost = []
     accuracys = []
     for n_experiment in range(N_EXPERIMENT):
-        print('=' * 32 + 'experiment:{}'.format(n_experiment) + '=' * 32)
+        # print('=' * 32 + 'experiment:{}'.format(n_experiment) + '=' * 32)
         set_hyperpamameter()
         train_cost, acc = experiment()
         trains_cost.append(train_cost)
         accuracys.append(acc)
-    print('*' * 64)
+    # print('*' * 64)
+    print('experiment number:{}'.format(N_EXPERIMENT))
     print('average train cost:{}\naverage accuracy:{}'.format(np.mean(np.array(trains_cost)), np.mean(np.array(accuracys))))

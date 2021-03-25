@@ -14,23 +14,23 @@ Detailed experiment records can be viewed [结果记录](https://www.wolai.com/t
 
 ### accuracy
 
-The data in the table are the average of 10 experimental results.
+The data in the table are the average of 30 experimental results.
 
 | Modality |  T   | A+V  | T+A  | T+V  |  T+A+V  |
 | :------: | :--: | :--: | :--: | :--: | :-----: |
-|  C-MFN   |      |      |      |      | 0.63236 |
+|  C-MFN   |      |      |      |      |         |
 | C-MFN(P) |      |      |      |      |         |
 | C-MFN(C) |      |      |      |      |         |
 
 ### train cost
 
-The data in the table are the average of 10 experimental results.
+The data in the table are the average of 30 experimental results.
 
 All programs run on **Nvidia Tesla T4**.
 
 | Modality |  T   | A+V  | T+A  | T+V  |        T+A+V        |
 | :------: | :--: | :--: | :--: | :--: | :-----------------: |
-|  C-MFN   |      |      |      |      | 240.55228493213653s |
+|  C-MFN   |      |      |      |      |                     |
 | C-MFN(P) |      |      |      |      |                     |
 | C-MFN(C) |      |      |      |      |                     |
 
