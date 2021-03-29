@@ -1,6 +1,4 @@
 from driver import ex
-import os
-import pickle
 
 experiment_configs = [
     # idx 0:(c, p), (t, a, v)
@@ -169,17 +167,37 @@ experiment_configs = [
         'use_v_punchline': False
     }
 ]
-n_experiment = len(experiment_configs)
+n_experiment_config = len(experiment_configs)
+experiment_names = [
+    '(c, p),(t, a, v)',
+    '(c, p),(t, a)',
+    '(c, p),(t, v)',
+    '(c, p),(a, v)',
+    '(c, p),(t)',
+    '(p),(t, a, v)',
+    '(p),(t, a)',
+    '(p),(t, v)',
+    '(p),(a, v)',
+    '(c),(t, a, v)',
+    '(c),(t, a)',
+    '(c),(t, v)',
+    '(c),(a, v)',
+    '(c),(t)'
+]
+n_experiment = 20
 
 
-def run_experiment():
-    experiment_idx = 0
-    upd_cfg_dict = {
-        **experiment_configs[experiment_idx]
-    }
-    ex.run(config_updates=upd_cfg_dict)
+def run_experiment(idx):
+    for experiment in range(n_experiment):
+        upd_cfg_dict = {
+            **experiment_configs[idx],
+            'experiment_name': experiment_names[idx],
+            'experiment_idx': idx,
+            'experiment': experiment
+        }
+        ex.run(config_updates=upd_cfg_dict)
 
 
 if __name__ == '__main__':
-    while (True):
-        run_experiment()
+    for experiment_idx in range(n_experiment_config):
+        run_experiment(experiment_idx)

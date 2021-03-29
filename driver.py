@@ -1,8 +1,7 @@
 import os
-import time
 import pickle
 import random
-import logging
+from tqdm import tqdm
 import numpy as np
 import torch
 import torch.nn as nn
@@ -10,12 +9,10 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import accuracy_score, f1_score
 from sacred import Experiment
+from transformer import ScheduledOptim
 from models import C_MFN
 
 ex = Experiment('Multimodal Humor Detection')
-
-logger = logging.getLogger()
-logger.disabled = True
 
 
 def load_pickle(pickle_file):
@@ -33,6 +30,17 @@ def load_pickle(pickle_file):
 
 @ex.config
 def config():
+    # experiment
+    experiment_idx = 0
+    experiment = 0
+
+    experiment_name = ''
+    experiment_path = os.path.join('.', 'Experiment', str(experiment_idx) + '-' + experiment_name)
+
+    best_model_file = os.path.join(experiment_path, 'best_model.pth')
+    best_config_file = os.path.join(experiment_path, 'best_config.pkl')
+    test_accuracy_file = os.path.join(experiment_path, 'test_accuracy.txt')
+
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -50,16 +58,11 @@ def config():
     v_file = os.path.join(dataset_path, 'openface_features_sdk.pkl')
     label_file = os.path.join(dataset_path, 'humor_label_sdk.pkl')
 
-    # dataset sdk
-    emb_list_sdk = load_pickle(emb_list_file)
-    t_sdk = load_pickle(t_file)
-    a_sdk = load_pickle(a_file)
-    v_sdk = load_pickle(v_file)
-    label_sdk = load_pickle(label_file)
-
     # hyper parameter
-    n_epoch = 50
-    batch_size = random.choice([64, 128, 256, 512])
+    n_epoch = 30
+    train_batch_size = 512
+    dev_batch_size = 2645
+    test_batch_size = 3305
     shuffle = True
 
     learning_rate = random.choice([0.001, 0.002, 0.005, 0.008, 0.01])
@@ -79,8 +82,6 @@ def config():
     use_v_punchline = True
 
     # model
-    best_model_file = os.path.join('.', 'best_model.pth')
-
     uni_t_in_dim = t_n_feature
     uni_a_in_dim = a_n_feature
     uni_v_in_dim = v_n_feature
@@ -97,6 +98,7 @@ def config():
     src_n_feature = uni_t_n_hidden + uni_a_n_hidden + uni_v_n_hidden
     max_seq_len = max_context_len
     d_model = 512
+    n_warmup_steps = 4000
     nhead = 8
     n_layer = 6
     d_ff = 2048
@@ -128,15 +130,18 @@ def config():
     mfn_output_dropout = random.choice([0.0, 0.2, 0.5, 0.7])
     mfn_output_dim = 1
 
-    # experiment
-    experiment_idx = 0
-
 
 class HumorDataset(Dataset):
     def __init__(self, _config, id_list):
         self.config = _config
 
         self.id_list = id_list
+
+        self.emb_list_sdk = load_pickle(self.config['emb_list_file'])
+        self.t_sdk = load_pickle(self.config['t_file'])
+        self.a_sdk = load_pickle(self.config['a_file'])
+        self.v_sdk = load_pickle(self.config['v_file'])
+        self.label_sdk = load_pickle(self.config['label_file'])
 
         self.t_dim = self.config['t_n_feature']
         self.a_dim = self.config['a_n_feature']
@@ -149,7 +154,7 @@ class HumorDataset(Dataset):
     def padded_t_feature(self, seq):
         seq = seq[:self.max_sentence_len]
         padded_t = np.concatenate((np.zeros(self.max_sentence_len - len(seq)), seq), axis=0)
-        padded_t = np.array([self.config['emb_list_sdk'][int(t_id)] for t_id in padded_t])
+        padded_t = np.array([self.emb_list_sdk[int(t_id)] for t_id in padded_t])
         return padded_t
 
     def padded_a_feature(self, seq):
@@ -191,21 +196,27 @@ class HumorDataset(Dataset):
     def __getitem__(self, item):
         hid = self.id_list[item]
 
-        t_context = np.array(self.config['t_sdk'][hid]['context_embedding_indexes'])
-        a_context = np.array(self.config['a_sdk'][hid]['context_features'])
-        v_context = np.array(self.config['v_sdk'][hid]['context_features'])
+        t_context = np.array(self.t_sdk[hid]['context_embedding_indexes'])
+        a_context = np.array(self.a_sdk[hid]['context_features'])
+        v_context = np.array(self.v_sdk[hid]['context_features'])
 
-        t_punchline = np.array(self.config['t_sdk'][hid]['punchline_embedding_indexes'])
-        a_punchline = np.array(self.config['a_sdk'][hid]['punchline_features'])
-        v_punchline = np.array(self.config['v_sdk'][hid]['punchline_features'])
+        t_punchline = np.array(self.t_sdk[hid]['punchline_embedding_indexes'])
+        a_punchline = np.array(self.a_sdk[hid]['punchline_features'])
+        v_punchline = np.array(self.v_sdk[hid]['punchline_features'])
 
         x_c = torch.FloatTensor(self.padded_context_feature(t_context, a_context, v_context))
         x_p = torch.FloatTensor(self.padded_punchline_feature(t_punchline, a_punchline, v_punchline))
-        y = torch.FloatTensor([self.config['label_sdk'][hid]])
+        y = torch.FloatTensor([self.label_sdk[hid]])
 
         # x_c: [batch_size, max_context_len, max_sentence_len, n_feature]
         # x_p: [batch_size, max_sentence_len, n_feature]
         return x_c, x_p, y
+
+
+@ex.capture
+def set_experiment(_config):
+    if not os.path.isdir(_config['experiment_path']):
+        os.makedirs(_config['experiment_path'])
 
 
 @ex.capture
@@ -221,15 +232,15 @@ def set_dataloader(_config):
 
     train = data_folds['train']
     train_set = HumorDataset(_config, train)
-    train_dataloader = DataLoader(train_set, batch_size=_config['batch_size'], shuffle=_config['shuffle'])
+    train_dataloader = DataLoader(train_set, batch_size=_config['train_batch_size'], shuffle=_config['shuffle'])
 
     dev = data_folds['dev']
     dev_set = HumorDataset(_config, dev)
-    dev_dataloader = DataLoader(dev_set, batch_size=_config['batch_size'], shuffle=_config['shuffle'])
+    dev_dataloader = DataLoader(dev_set, batch_size=_config['dev_batch_size'], shuffle=_config['shuffle'])
 
     test = data_folds['test']
     test_set = HumorDataset(_config, test)
-    test_dataloader = DataLoader(test_set, batch_size=_config['batch_size'], shuffle=_config['shuffle'])
+    test_dataloader = DataLoader(test_set, batch_size=_config['test_batch_size'], shuffle=_config['shuffle'])
 
     return train_dataloader, dev_dataloader, test_dataloader
 
@@ -248,7 +259,7 @@ def train_epoch(model, train_dataloader, optimizer, criterion, _config):
         loss = criterion(preds, y.float())
         epoch_loss += loss.item()
         loss.backward()
-        optimizer.step()
+        optimizer.step_and_update_lr()
 
         n_batch += 1
 
@@ -263,7 +274,6 @@ def eval_epoch(model, valid_dataloader, criterion, _config):
     n_batch = 0
 
     model.eval()
-
     with torch.no_grad():
         for batch in valid_dataloader:
             x_c, x_p, y = map(lambda x: x.to(_config['device']), batch)
@@ -273,8 +283,6 @@ def eval_epoch(model, valid_dataloader, criterion, _config):
             epoch_loss += loss.item()
 
             n_batch += 1
-            if n_batch == 3:
-                print('-' * 32)
 
     if n_batch == 0:
         n_batch += 1
@@ -284,15 +292,23 @@ def eval_epoch(model, valid_dataloader, criterion, _config):
 @ex.capture
 def train(model, train_dataloader, valid_dataloader, optimizer, criterion, _config):
     valid_losses = []
-    for epoch in range(_config['n_epoch']):
+    best_epoch = 0
+    for epoch in tqdm(range(_config['n_epoch']), desc='{} experiment {}'.format(_config['experiment_idx'], _config['experiment'])):
         train_loss = train_epoch(model, train_dataloader, optimizer, criterion)
 
         valid_loss = eval_epoch(model, valid_dataloader, criterion)
         valid_losses.append(valid_loss)
 
         if valid_loss <= min(valid_losses):
+            best_epoch = epoch
             torch.save(model.state_dict(), _config['best_model_file'])
-            logger.debug('The best model file has been updated.')
+            with open(_config['best_config_file'], 'wb') as cfg_f:
+                pickle.dump(_config, cfg_f)
+        elif epoch - best_epoch >= 6:
+            print('early stopping break')
+            break
+
+        print("\nepoch:{},train_loss:{}, valid_loss:{}".format(epoch, train_loss, valid_loss))
 
 
 @ex.capture
@@ -325,24 +341,28 @@ def test_score_from_file(test_dataloader, _config):
     preds = (preds >= 0)
 
     acc = accuracy_score(y_test, preds)
-    f1 = f1_score(np.round(preds), np.round(y_test), average='weighted')
 
-    logger.debug('accuracy: {}  f1: {}'.format(acc, f1))
+    return acc
 
 
 @ex.automain
 def driver(_config):
+    set_experiment()
     set_random_seed()
 
     train_dataloader, dev_dataloader, test_dataloader = set_dataloader()
 
     model = C_MFN(_config).to(_config['device'])
-    optimizer = optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=_config['learning_rate'], betas=(0.9, 0.98), eps=1e-9)
+    optimizer = ScheduledOptim(
+        optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=_config['learning_rate'], betas=(0.9, 0.98), eps=1e-9),
+        _config['d_model'],
+        _config['n_warmup_steps']
+    )
     criterion = nn.BCEWithLogitsLoss().to(_config['device'])
 
-    train_start_time = time.time()
     train(model, train_dataloader, dev_dataloader, optimizer, criterion)
-    train_end_time = time.time()
-    logger.debug('train cost: {}'.format(train_end_time - train_start_time))
 
-    test_score_from_file(test_dataloader)
+    test_accuracy = test_score_from_file(test_dataloader)
+    test_accuracy_file = open(_config['test_accuracy_file'], 'a')
+    test_accuracy_file.write('The {}th test accuracy of experiment No.{}: {}'.format(_config['experiment'], _config['experiment_idx'], test_accuracy) + '\n')
+    test_accuracy_file.close()

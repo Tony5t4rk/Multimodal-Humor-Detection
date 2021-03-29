@@ -10,23 +10,10 @@ It implements the C-MFN baseline proposed in [UR-FUNNY: A Multimodal Language Da
 
 ### accuracy
 
-The data in the table are the average of 30 experimental results.
+The data in the table are the best model results of 20 experiments on the validation set.
 
-| Modality |  T   | A+V  | T+A  | T+V  |  T+A+V  |
-| :------: | :--: | :--: | :--: | :--: | :-----: |
-|  C-MFN   |      |      |      |      |         |
-| C-MFN(P) |      |      |      |      |         |
-| C-MFN(C) |      |      |      |      |         |
-
-### train cost
-
-The data in the table are the average of 30 experimental results.
-
-All programs run on **Nvidia Tesla T4**.
-
-| Modality |  T   | A+V  | T+A  | T+V  |        T+A+V        |
-| :------: | :--: | :--: | :--: | :--: | :-----------------: |
-|  C-MFN   |      |      |      |      |                     |
-| C-MFN(P) |      |      |      |      |                     |
-| C-MFN(C) |      |      |      |      |                     |
-
+| Modality |  T   | A+V  |        T+A         | T+V  |       T+A+V        |
+| :------: | :--: | :--: | :----------------: | :--: | :----------------: |
+|  C-MFN   |      |      |                    |      |                    |
+| C-MFN(P) |      |      |                    |      |                    |
+| C-MFN(C) |      |      | 0.5964083175803403 |      | 0.6483931947069943 |
