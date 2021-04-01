@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score
 from sacred import Experiment
 from transformer import ScheduledOptim
 from models import C_MFN
@@ -30,6 +30,9 @@ def load_pickle(pickle_file):
 
 @ex.config
 def config():
+    # is train
+    train = False
+
     # experiment
     experiment_idx = 0
     experiment = 0
@@ -37,8 +40,9 @@ def config():
     experiment_name = ''
     experiment_path = os.path.join('.', 'Experiment', str(experiment_idx) + '-' + experiment_name)
 
-    best_model_file = os.path.join(experiment_path, 'best_model.pth')
-    best_config_file = os.path.join(experiment_path, 'best_config.pkl')
+    result_file = os.path.join(experiment_path, str(experiment) + '-result.ckpt')
+
+    test_file = None
     test_accuracy_file = os.path.join(experiment_path, 'test_accuracy.txt')
 
     # device
@@ -59,7 +63,7 @@ def config():
     label_file = os.path.join(dataset_path, 'humor_label_sdk.pkl')
 
     # hyper parameter
-    n_epoch = 30
+    n_epoch = 50
     train_batch_size = 512
     dev_batch_size = 2645
     test_batch_size = 3305
@@ -292,23 +296,22 @@ def eval_epoch(model, valid_dataloader, criterion, _config):
 @ex.capture
 def train(model, train_dataloader, valid_dataloader, optimizer, criterion, _config):
     valid_losses = []
-    best_epoch = 0
     for epoch in tqdm(range(_config['n_epoch']), desc='{} experiment {}'.format(_config['experiment_idx'], _config['experiment'])):
         train_loss = train_epoch(model, train_dataloader, optimizer, criterion)
 
         valid_loss = eval_epoch(model, valid_dataloader, criterion)
         valid_losses.append(valid_loss)
 
-        if valid_loss <= min(valid_losses):
-            best_epoch = epoch
-            torch.save(model.state_dict(), _config['best_model_file'])
-            with open(_config['best_config_file'], 'wb') as cfg_f:
-                pickle.dump(_config, cfg_f)
-        elif epoch - best_epoch >= 6:
-            print('early stopping break')
-            break
+        print("\nepoch:{}, train_loss:{}, valid_loss:{}".format(epoch, train_loss, valid_loss))
 
-        print("\nepoch:{},train_loss:{}, valid_loss:{}".format(epoch, train_loss, valid_loss))
+        if valid_loss <= min(valid_losses):
+            result = {
+                'model': model.state_dict(),
+                '_config': _config,
+                'epoch': epoch,
+                'valid_loss': valid_loss
+            }
+            torch.save(result, _config['result_file'])
 
 
 @ex.capture
@@ -333,9 +336,19 @@ def test_epoch(model, test_dataloader, _config):
 
 
 @ex.capture
-def test_score_from_file(test_dataloader, _config):
+def reload_model_from_file(path):
+    ckpt = torch.load(path)
+    _config = ckpt['_config']
+
     model = C_MFN(_config).to(_config['device'])
-    model.load_state_dict(torch.load(_config['best_model_file']))
+    model.load_state_dict(ckpt['model'])
+
+    return model
+
+
+@ex.capture
+def test_score_from_file(test_dataloader, _config):
+    model = reload_model_from_file(_config['test_file'])
 
     preds, y_test = test_epoch(model, test_dataloader)
     preds = (preds >= 0)
@@ -347,22 +360,23 @@ def test_score_from_file(test_dataloader, _config):
 
 @ex.automain
 def driver(_config):
-    set_experiment()
-    set_random_seed()
-
     train_dataloader, dev_dataloader, test_dataloader = set_dataloader()
 
-    model = C_MFN(_config).to(_config['device'])
-    optimizer = ScheduledOptim(
-        optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=_config['learning_rate'], betas=(0.9, 0.98), eps=1e-9),
-        _config['d_model'],
-        _config['n_warmup_steps']
-    )
-    criterion = nn.BCEWithLogitsLoss().to(_config['device'])
+    if _config['train']:
+        set_experiment()
+        set_random_seed()
 
-    train(model, train_dataloader, dev_dataloader, optimizer, criterion)
+        model = C_MFN(_config).to(_config['device'])
+        optimizer = ScheduledOptim(
+            optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=_config['learning_rate'], betas=(0.9, 0.98), eps=1e-9),
+            _config['d_model'],
+            _config['n_warmup_steps']
+        )
+        criterion = nn.BCEWithLogitsLoss().to(_config['device'])
 
-    test_accuracy = test_score_from_file(test_dataloader)
-    test_accuracy_file = open(_config['test_accuracy_file'], 'a')
-    test_accuracy_file.write('The {}th test accuracy of experiment No.{}: {}'.format(_config['experiment'], _config['experiment_idx'], test_accuracy) + '\n')
-    test_accuracy_file.close()
+        train(model, train_dataloader, dev_dataloader, optimizer, criterion)
+    else:
+        test_accuracy = test_score_from_file(test_dataloader)
+        with open(_config['test_accuracy_file'], 'a') as test_accuracy_file:
+            test_accuracy_file.write('The best model checkpoint file: {}\n'.format(_config['test_file']))
+            test_accuracy_file.write('The test accuracy of experiment No.{}: {}'.format(_config['experiment_idx'], round(test_accuracy, 4) * 100) + '\n')

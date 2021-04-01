@@ -10,10 +10,8 @@ It implements the C-MFN baseline proposed in [UR-FUNNY: A Multimodal Language Da
 
 ### accuracy
 
-The data in the table are the best model results of 20 experiments on the validation set.
-
-| Modality |  T   | A+V  |        T+A         | T+V  |       T+A+V        |
-| :------: | :--: | :--: | :----------------: | :--: | :----------------: |
-|  C-MFN   |      |      |                    |      |                    |
-| C-MFN(P) |      |      |                    |      |                    |
-| C-MFN(C) |      |      | 0.5964083175803403 |      | 0.6483931947069943 |
+| Modality |   T   |  A+V  |  T+A  |  T+V  | T+A+V |
+| :------: | :---: | :---: | :---: | :---: | :---: |
+| C-MFN(P) | 64.27 | 60.59 | 64.37 | 64.74 | 65.12 |
+| C-MFN(C) | 58.03 | 53.88 | 57.28 | 58.70 | 58.98 |
+|  C-MFN   | 64.18 | 58.88 | 64.46 | 64.65 | 65.03 |

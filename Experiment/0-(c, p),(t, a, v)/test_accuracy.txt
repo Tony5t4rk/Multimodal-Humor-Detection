@@ -1,20 +1,2 @@
-The 0th test accuracy of experiment No.0: 0.6512287334593573
-The 1th test accuracy of experiment No.0: 0.6370510396975425
-The 2th test accuracy of experiment No.0: 0.6417769376181475
-The 3th test accuracy of experiment No.0: 0.6559546313799622
-The 4th test accuracy of experiment No.0: 0.6483931947069943
-The 5th test accuracy of experiment No.0: 0.6427221172022685
-The 6th test accuracy of experiment No.0: 0.6550094517958412
-The 7th test accuracy of experiment No.0: 0.6238185255198487
-The 8th test accuracy of experiment No.0: 0.6521739130434783
-The 9th test accuracy of experiment No.0: 0.6086956521739131
-The 10th test accuracy of experiment No.0: 0.5973534971644613
-The 11th test accuracy of experiment No.0: 0.6483931947069943
-The 12th test accuracy of experiment No.0: 0.6361058601134215
-The 13th test accuracy of experiment No.0: 0.6275992438563327
-The 14th test accuracy of experiment No.0: 0.6257088846880907
-The 15th test accuracy of experiment No.0: 0.6550094517958412
-The 16th test accuracy of experiment No.0: 0.6559546313799622
-The 17th test accuracy of experiment No.0: 0.6001890359168242
-The 18th test accuracy of experiment No.0: 0.5973534971644613
-The 19th test accuracy of experiment No.0: 0.6483931947069943
+The best model checkpoint file: ./Experiment/0-(c, p),(t, a, v)/14-result.ckpt
+The test accuracy of experiment No.0: 65.03

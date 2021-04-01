@@ -1,0 +1,2 @@
+The best model checkpoint file: ./Experiment/13-(c),(a, v)/1-result.ckpt
+The test accuracy of experiment No.13: 53.879999999999995
