@@ -1,2 +1,0 @@
-The best model checkpoint file: ./Experiment/7-(p),(t, v)/16-result.ckpt
-The test accuracy of experiment No.7: 64.74

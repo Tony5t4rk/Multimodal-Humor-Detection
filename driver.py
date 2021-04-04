@@ -63,16 +63,14 @@ def config():
     label_file = os.path.join(dataset_path, 'humor_label_sdk.pkl')
 
     # hyper parameter
-    n_epoch = 50
+    n_epoch = 30
     train_batch_size = 512
     dev_batch_size = 2645
     test_batch_size = 3305
     shuffle = True
 
-    learning_rate = random.choice([0.001, 0.002, 0.005, 0.008, 0.01])
-
     # data
-    max_context_len = 5
+    max_context_len = 7
     max_sentence_len = 20
 
     use_context = True
@@ -368,7 +366,7 @@ def driver(_config):
 
         model = C_MFN(_config).to(_config['device'])
         optimizer = ScheduledOptim(
-            optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), lr=_config['learning_rate'], betas=(0.9, 0.98), eps=1e-9),
+            optim.Adam(filter(lambda x: x.requires_grad, model.parameters()), betas=(0.9, 0.98), eps=1e-9),
             _config['d_model'],
             _config['n_warmup_steps']
         )
@@ -379,4 +377,4 @@ def driver(_config):
         test_accuracy = test_score_from_file(test_dataloader)
         with open(_config['test_accuracy_file'], 'a') as test_accuracy_file:
             test_accuracy_file.write('The best model checkpoint file: {}\n'.format(_config['test_file']))
-            test_accuracy_file.write('The test accuracy of experiment No.{}: {}'.format(_config['experiment_idx'], round(test_accuracy, 4) * 100) + '\n')
+            test_accuracy_file.write('The test accuracy of experiment No.{}: {}'.format(_config['experiment_idx'], round(test_accuracy * 100, 2)) + '\n')

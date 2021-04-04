@@ -8,70 +8,74 @@ experiment_configs = [
         'use_context': True, 'use_t_context': True, 'use_a_context': True, 'use_v_context': True,
         'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': True, 'use_v_punchline': True
     },
-    # idx 1:(c, p), (t, a)
-    {
-        'use_context': True, 'use_t_context': True, 'use_a_context': True, 'use_v_context': False,
-        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': True, 'use_v_punchline': False
-    },
-    # idx 2:(c, p), (t, v)
-    {
-        'use_context': True, 'use_t_context': True, 'use_a_context': False, 'use_v_context': True,
-        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': True
-    },
-    # idx 3:(c, p), (a, v)
-    {
-        'use_context': True, 'use_t_context': False, 'use_a_context': True, 'use_v_context': True,
-        'use_punchline': True, 'use_t_punchline': False, 'use_a_punchline': True, 'use_v_punchline': True
-    },
-    # idx 4:(c, p), (t)
-    {
-        'use_context': True, 'use_t_context': True, 'use_a_context': False, 'use_v_context': False,
-        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': False
-    },
-    # idx 5:(p), (t, a, v)
+    # idx 1:(p), (t, a, v)
     {
         'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
         'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': True, 'use_v_punchline': True
     },
-    # idx 6:(p), (t, a)
-    {
-        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
-        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': True, 'use_v_punchline': False
-    },
-    # idx 7:(p), (t, v)
-    {
-        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
-        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': True
-    },
-    # idx 8:(p), (a, v)
-    {
-        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
-        'use_punchline': True, 'use_t_punchline': False, 'use_a_punchline': True, 'use_v_punchline': True
-    },
-    # idx 9:(p), (t)
-    {
-        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
-        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': False
-    },
-    # idx 10:(c), (t, a, v)
+    # idx 2:(c), (t, a, v)
     {
         'use_context': True, 'use_t_context': True, 'use_a_context': True, 'use_v_context': True,
         'use_punchline': False, 'use_t_punchline': False, 'use_a_punchline': False, 'use_v_punchline': False
     },
-    # idx 11:(c), (t, a)
+
+    # idx 3:(c, p), (t, v)
     {
-        'use_context': True, 'use_t_context': True, 'use_a_context': True, 'use_v_context': False,
-        'use_punchline': False, 'use_t_punchline': False, 'use_a_punchline': False, 'use_v_punchline': False
+        'use_context': True, 'use_t_context': True, 'use_a_context': False, 'use_v_context': True,
+        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': True
     },
-    # idx 12:(c), (t, v)
+    # idx 4:(p), (t, v)
+    {
+        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
+        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': True
+    },
+    # idx 5:(c), (t, v)
     {
         'use_context': True, 'use_t_context': True, 'use_a_context': False, 'use_v_context': True,
         'use_punchline': False, 'use_t_punchline': False, 'use_a_punchline': False, 'use_v_punchline': False
     },
-    # idx 13:(c), (a, v)
+
+    # idx 6:(c, p), (t, a)
+    {
+        'use_context': True, 'use_t_context': True, 'use_a_context': True, 'use_v_context': False,
+        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': True, 'use_v_punchline': False
+    },
+    # idx 7:(p), (t, a)
+    {
+        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
+        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': True, 'use_v_punchline': False
+    },
+    # idx 8:(c), (t, a)
+    {
+        'use_context': True, 'use_t_context': True, 'use_a_context': True, 'use_v_context': False,
+        'use_punchline': False, 'use_t_punchline': False, 'use_a_punchline': False, 'use_v_punchline': False
+    },
+
+    # idx 9:(c, p), (a, v)
+    {
+        'use_context': True, 'use_t_context': False, 'use_a_context': True, 'use_v_context': True,
+        'use_punchline': True, 'use_t_punchline': False, 'use_a_punchline': True, 'use_v_punchline': True
+    },
+    # idx 10:(p), (a, v)
+    {
+        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
+        'use_punchline': True, 'use_t_punchline': False, 'use_a_punchline': True, 'use_v_punchline': True
+    },
+    # idx 11:(c), (a, v)
     {
         'use_context': True, 'use_t_context': False, 'use_a_context': True, 'use_v_context': True,
         'use_punchline': False, 'use_t_punchline': False, 'use_a_punchline': False, 'use_v_punchline': False
+    },
+
+    # idx 12:(c, p), (t)
+    {
+        'use_context': True, 'use_t_context': True, 'use_a_context': False, 'use_v_context': False,
+        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': False
+    },
+    # idx 13:(p), (t)
+    {
+        'use_context': False, 'use_t_context': False, 'use_a_context': False, 'use_v_context': False,
+        'use_punchline': True, 'use_t_punchline': True, 'use_a_punchline': False, 'use_v_punchline': False
     },
     # idx 14:(c), (t)
     {
@@ -82,22 +86,26 @@ experiment_configs = [
 n_experiment_config = len(experiment_configs)
 experiment_names = [
     '(c, p),(t, a, v)',  # idx 0
-    '(c, p),(t, a)',  # idx 1
-    '(c, p),(t, v)',  # idx 2
-    '(c, p),(a, v)',  # idx 3
-    '(c, p),(t)',  # idx 4
-    '(p),(t, a, v)',  # idx 5
-    '(p),(t, a)',  # idx 6
-    '(p),(t, v)',  # idx 7
-    '(p),(a, v)',  # idx 8
-    '(p), (t)',  # idx 9
-    '(c),(t, a, v)',  # idx 10
-    '(c),(t, a)',  # idx 11
-    '(c),(t, v)',  # idx 12
-    '(c),(a, v)',  # idx 13
+    '(p),(t, a, v)',  # idx 1
+    '(c),(t, a, v)',  # idx 2
+
+    '(c, p),(t, v)',  # idx 3
+    '(p),(t, v)',  # idx 4
+    '(c),(t, v)',  # idx 5
+
+    '(c, p),(t, a)',  # idx 6
+    '(p),(t, a)',  # idx 7
+    '(c),(t, a)',  # idx 8
+
+    '(c, p),(a, v)',  # idx 9
+    '(p),(a, v)',  # idx 10
+    '(c),(a, v)',  # idx 11
+
+    '(c, p),(t)',  # idx 12
+    '(p), (t)',  # idx 13
     '(c),(t)'  # idx 14
 ]
-n_experiment = 20
+n_experiment = 12
 
 
 def run_experiment(idx):
@@ -152,7 +160,7 @@ def delete_ckpt(idx, best_ckpt_file):
 
 
 if __name__ == '__main__':
-    for experiment_idx in range(4, n_experiment_config):
+    for experiment_idx in range(n_experiment_config):
         run_experiment(experiment_idx)
         best_model_ckpt_file = get_best_model_ckpt(experiment_idx)
         run_test(experiment_idx, best_model_ckpt_file)
