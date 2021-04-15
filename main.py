@@ -1,6 +1,8 @@
 from driver import ex
 import os
+import numpy as np
 import torch
+import matplotlib.pyplot as plt
 
 experiment_configs = [
     # idx 0:(c, p), (t, a, v)
@@ -137,6 +139,50 @@ def get_best_model_ckpt(idx):
     return best_ckpt_file
 
 
+def draw_loss(epoch, train_loss_list, valid_loss_list, title, record_path):
+    train_loss_list, valid_loss_list = np.array(train_loss_list), np.array(valid_loss_list)
+    epoch_list = np.arange(0, epoch + 1, 1)
+
+    plt.title(title)
+    plt.plot(epoch_list, train_loss_list, color='green', label='train loss')
+    plt.plot(epoch_list, valid_loss_list, color='red', label='valid loss')
+    plt.legend()
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.savefig(record_path)
+    plt.show()
+
+
+def save_record(idx, best_ckpt_file):
+    cur_experiment_path = os.path.join('.', 'Experiment', str(idx) + '-' + experiment_names[idx])
+    file_list = os.listdir(cur_experiment_path)
+    for file in file_list:
+        file_path = os.path.join(cur_experiment_path, file)
+        if file_path != best_ckpt_file:
+            continue
+        ckpt = torch.load(file_path)
+        train_losses, valid_losses = ckpt['train_losses'], ckpt['valid_losses']
+        epoch = ckpt['epoch']
+        record_path = os.path.join(cur_experiment_path, 'loss.png')
+        if idx % 3 == 0:
+            model = 'C-MFN'
+        elif idx % 3 == 1:
+            model = 'C-MFN(P)'
+        else:
+            model = 'C-MFN(C)'
+        if idx // 3 == 0:
+            env = 'T+A+V'
+        elif idx // 3 == 1:
+            env = 'T+V'
+        elif idx // 3 == 2:
+            env = 'T+A'
+        elif idx // 3 == 3:
+            env = 'A+V'
+        else:
+            env = 'T'
+        draw_loss(epoch, train_losses, valid_losses, ' '.join([model, env, 'train loss and valid loss']), record_path)
+
+
 def run_test(idx, test_file):
     upd_cfg_dict = {
         **experiment_configs[idx],
@@ -163,5 +209,6 @@ if __name__ == '__main__':
     for experiment_idx in range(n_experiment_config):
         run_experiment(experiment_idx)
         best_model_ckpt_file = get_best_model_ckpt(experiment_idx)
+        save_record(experiment_idx, best_model_ckpt_file)
         run_test(experiment_idx, best_model_ckpt_file)
         delete_ckpt(experiment_idx, best_model_ckpt_file)

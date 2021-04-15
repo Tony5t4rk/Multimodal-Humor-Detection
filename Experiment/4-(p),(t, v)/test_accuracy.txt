@@ -1,2 +1,2 @@
-The best model checkpoint file: ./Experiment/4-(p),(t, v)/1-result.ckpt
-The test accuracy of experiment No.4: 65.4064
+The best model checkpoint file: ./Experiment/4-(p),(t, v)/10-result.ckpt
+The test accuracy of experiment No.4: 65.88

@@ -44,6 +44,7 @@ def config():
 
     test_file = None
     test_accuracy_file = os.path.join(experiment_path, 'test_accuracy.txt')
+    visual_model_file = os.path.join(experiment_path, 'model')
 
     # device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -293,20 +294,24 @@ def eval_epoch(model, valid_dataloader, criterion, _config):
 
 @ex.capture
 def train(model, train_dataloader, valid_dataloader, optimizer, criterion, _config):
+    train_losses = []
     valid_losses = []
     for epoch in tqdm(range(_config['n_epoch']), desc='{} experiment {}'.format(_config['experiment_idx'], _config['experiment'])):
         train_loss = train_epoch(model, train_dataloader, optimizer, criterion)
+        train_losses.append(train_loss)
 
         valid_loss = eval_epoch(model, valid_dataloader, criterion)
         valid_losses.append(valid_loss)
 
-        print("\nepoch:{}, train_loss:{}, valid_loss:{}".format(epoch, train_loss, valid_loss))
+        # print("\nepoch:{}, train_loss:{}, valid_loss:{}".format(epoch, train_loss, valid_loss))
 
         if valid_loss <= min(valid_losses):
             result = {
                 'model': model.state_dict(),
                 '_config': _config,
                 'epoch': epoch,
+                'train_losses': train_losses,
+                'valid_losses': valid_losses,
                 'valid_loss': valid_loss
             }
             torch.save(result, _config['result_file'])
